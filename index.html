@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лавка Института Пушкина</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#">Институт Пушкина<span>лавка</span></a>
+  <button class="cart-btn" id="openCart" aria-label="Открыть корзину">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 11h10.2l2-8H6.6"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>
+    <span>Корзина</span><b id="cartCount" hidden>0</b>
+  </button>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <h1>Русский язык всегда под рукой</h1>
+    <p class="quote">Блокноты, кружки, одежда и другие вещи с символикой Государственного института русского языка имени А. С. Пушкина.</p>
+  </div>
+  <div class="alpha" aria-hidden="true"><div class="alpha-track" id="alpha"></div></div>
+</section>
+
+<section class="rec" id="rec" hidden aria-roledescription="carousel" aria-label="Рекомендуем">
+  <div class="rec-stage">
+    <button class="rec-arrow prev" id="recPrev" aria-label="Предыдущий товар">‹</button>
+    <div class="rec-viewport"><span class="rec-badge">Рекомендуем</span><div class="rec-track" id="recTrack"></div></div>
+    <button class="rec-arrow next" id="recNext" aria-label="Следующий товар">›</button>
+  </div>
+  <div class="rec-dots" id="recDots"></div>
+</section>
+
+<main>
+  <h2 class="catalog-title">Каталог</h2>
+  <p class="note" id="priceNote" hidden></p>
+  <div class="grid" id="grid"></div>
+  <p class="error" id="loadError" hidden>Не удалось загрузить data.js — проверьте, что файл лежит рядом с index.html.</p>
+</main>
+
+<footer>Оплата и передача заказа — по электронной почте после оформления.</footer>
+
+<div class="overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Корзина" aria-hidden="true">
+  <div class="drawer-head"><h2>Корзина</h2><button class="icon-btn" id="closeCart" aria-label="Закрыть">✕</button></div>
+  <div id="cartView">
+    <ul class="cart-list" id="cartList"></ul>
+    <div class="cart-foot" id="cartFoot">
+      <div class="total"><span>Итого</span><strong id="total">0 ₽</strong></div>
+      <label for="email">Ваша почта для связи</label>
+      <input type="email" id="email" placeholder="name@example.com" autocomplete="email">
+      <p class="error" id="emailError" hidden></p>
+      <label for="note">Сообщение для продавца (необязательно)</label>
+      <textarea id="note" rows="3" maxlength="1000" placeholder="Например: нужен логотип на кружках, уточните сроки"></textarea>
+      <button class="primary" id="checkout">Оформить заказ</button>
+    </div>
+  </div>
+  <div id="doneView" hidden>
+    <h3 id="doneTitle"></h3>
+    <p id="doneText"></p>
+    <div id="fallback" hidden>
+      <a class="primary as-link" id="mailLink" href="#">Открыть письмо в почтовой программе</a>
+      <button class="secondary" id="copyOrder">Скопировать текст заказа</button>
+      <pre id="orderText"></pre>
+      <button class="secondary" id="retry">Попробовать снова</button>
+    </div>
+    <button class="secondary" id="backToShop">Вернуться в каталог</button>
+  </div>
+</aside>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
