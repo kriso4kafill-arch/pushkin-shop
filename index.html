@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Лавка Института Пушкина</title>
-<link rel="stylesheet" href="style.css">
+<script>
+  // Метка времени в адресах файлов: при каждом открытии браузер берёт свежие style.css, data.js и app.js,
+  // поэтому обновления на GitHub Pages доходят сразу, без очистки кэша.
+  window.__v = Date.now();
+  document.write('<link rel="stylesheet" href="style.css?v=' + window.__v + '">');
+</script>
 </head>
 <body>
 <header class="top">
@@ -63,6 +68,7 @@
     <div id="pendingBlock">
       <h3 id="doneTitle"></h3>
       <p id="doneText"></p>
+      <div class="webmail" id="webmail" hidden></div>
       <button class="primary wide" id="sentBtn">Письмо отправлено</button>
       <details class="manual" id="manual">
         <summary>Письмо не открылось?</summary>
@@ -70,7 +76,7 @@
         <button class="secondary" id="copyMail">Скопировать адрес</button>
         <button class="secondary" id="copyOrder">Скопировать текст заказа</button>
         <pre id="orderText"></pre>
-        <a class="secondary as-link" id="mailLink" href="#">Открыть письмо ещё раз</a>
+        <a class="secondary as-link" id="mailLink" href="#">Открыть в почтовой программе</a>
       </details>
       <button class="secondary" id="backToCart">Вернуться в корзину</button>
     </div>
@@ -82,7 +88,8 @@
   </div>
 </aside>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
+<script>
+  document.write('<script src="data.js?v=' + window.__v + '"><\/script><script src="app.js?v=' + window.__v + '"><\/script>');
+</script>
 </body>
 </html>

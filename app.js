@@ -35,8 +35,8 @@
   function productImg(p) {
     const img = new Image(); img.alt = p._ru; let i = 0, usedPlaceholder = false;
     const next = () => {
-      if (i < EXT.length) img.src = `${S.imagesFolder}/${p.image ?? p.id}.${EXT[i++]}`;
-      else if (!usedPlaceholder) { usedPlaceholder = true; img.src = `${S.imagesFolder}/${S.placeholder || 'placeholder.svg'}`; }
+      if (i < EXT.length) img.src = `${S.imagesFolder}/${p.image ?? p.id}.${EXT[i++]}?v=${S.imagesVersion || 1}`;
+      else if (!usedPlaceholder) { usedPlaceholder = true; img.src = `${S.imagesFolder}/${S.placeholder || 'placeholder.svg'}?v=${S.imagesVersion || 1}`; }
       else img.removeAttribute('src');
     };
     img.onerror = next; next(); return img;
@@ -183,6 +183,22 @@
   };
   const mailHref = (number, text) => `mailto:${S.orderEmail}?subject=${encodeURIComponent('Заказ № ' + number)}&body=${encodeURIComponent(text.replace(/\n/g, '\r\n'))}`;
 
+  // На компьютере почтовая программа часто не настроена, поэтому по домену почты клиента
+  // открываем письмо сразу в его веб-почте (в новой вкладке). Клиенту ничего выбирать не нужно.
+  const isDesktop = matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const e = encodeURIComponent;
+  const WEBMAIL = [
+    { name: 'Gmail', label: 'Gmail', domains: ['gmail.com', 'googlemail.com'],
+      url: m => `https://mail.google.com/mail/?view=cm&fs=1&to=${e(m.to)}&su=${e(m.subject)}&body=${e(m.body)}` },
+    { name: 'Яндекс Почте', label: 'Яндекс Почта', domains: ['yandex.ru', 'yandex.com', 'yandex.by', 'yandex.kz', 'yandex.ua', 'ya.ru'],
+      url: m => `https://mail.yandex.ru/compose?mailto=${e(m.mailto)}` },
+    { name: 'Mail.ru', label: 'Mail.ru', domains: ['mail.ru', 'inbox.ru', 'list.ru', 'bk.ru', 'internet.ru'],
+      url: m => `https://e.mail.ru/compose/?mailto=${e(m.mailto)}` },
+    { name: 'Outlook', label: 'Outlook', domains: ['outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'outlook.ru'],
+      url: m => `https://outlook.live.com/mail/0/deeplink/compose?to=${e(m.to)}&subject=${e(m.subject)}&body=${e(m.body)}` }
+  ];
+  const webmailFor = email => { const d = (email.split('@')[1] || '').toLowerCase(); return WEBMAIL.find(w => w.domains.includes(d)) || null; };
+
   let pending = null;
   $('#checkout').onclick = () => {
     const email = $('#email').value.trim(), err = $('#emailError');
@@ -192,24 +208,51 @@
     }
     err.hidden = true;
     const note = $('#note').value.trim(), n = peekOrderNumber(), number = S.orderPrefix + n;
-    let text = orderText(number, email, note, true), href = mailHref(number, text);
-    if (href.length > 1800) { text = orderText(number, email, note, false); href = mailHref(number, text); } // слишком длинная ссылка — без китайских названий
+    const subject = 'Заказ № ' + number;
+    const wm = isDesktop ? webmailFor(email) : null;
+
+    // слишком длинная ссылка — собираем письмо без китайских названий
+    const make = withZh => {
+      const text = orderText(number, email, note, withZh);
+      const mailto = mailHref(number, text);
+      return { text, mailto, href: wm ? wm.url({ to: S.orderEmail, subject, body: text, mailto }) : mailto };
+    };
+    const limit = isDesktop ? 6000 : 1800;
+    let o = make(true); if (o.href.length > limit) o = make(false);
     pending = { n, number, email };
 
     $('#doneTitle').textContent = `Заказ № ${number} готов к отправке`;
-    $('#doneText').textContent = 'В почтовой программе откроется письмо с заказом. Нажмите в нём «Отправить», затем вернитесь сюда и подтвердите.';
+    // компьютер, а почту клиента мы не узнали по адресу — даём выбрать веб-почту (почтовая программа на ПК часто не настроена)
+    const picker = isDesktop && !wm;
+    $('#doneText').textContent = wm
+      ? `В новой вкладке откроется письмо в ${wm.name}. Проверьте его, нажмите «Отправить», затем вернитесь сюда и подтвердите.`
+      : picker
+        ? 'Выберите свою почту: откроется новое письмо с готовым заказом. Нажмите в нём «Отправить», затем вернитесь сюда и подтвердите.'
+        : 'В почтовой программе откроется письмо с заказом. Нажмите в нём «Отправить», затем вернитесь сюда и подтвердите.';
+    const box = $('#webmail'); box.innerHTML = ''; box.hidden = !picker;
+    if (picker) WEBMAIL.forEach(w => {
+      const a = document.createElement('a'); a.className = 'secondary as-link'; a.target = '_blank'; a.rel = 'noopener';
+      a.href = w.url({ to: S.orderEmail, subject, body: o.text, mailto: o.mailto }); a.textContent = w.label; box.append(a);
+    });
     $('#sellerMail').textContent = S.orderEmail;
-    $('#orderText').textContent = text;
-    $('#mailLink').href = href;
+    $('#orderText').textContent = o.text;
+    const link = $('#mailLink'); link.href = o.href;
+    if (wm) { link.target = '_blank'; link.rel = 'noopener'; } else { link.removeAttribute('target'); link.removeAttribute('rel'); }
     $('#manual').open = false;
     $('#pendingBlock').hidden = false; $('#sentBlock').hidden = true;
     $('#cartView').hidden = true; $('#doneView').hidden = false;
 
+    if (wm) {
+      const w = window.open(o.href, '_blank');
+      if (w) w.opener = null; else $('#manual').open = true;   // вкладку заблокировали — показываем запасной вариант
+      return;
+    }
+    if (picker) return;
     // если после перехода окно осталось на месте (почта не открылась) — сами раскрываем запасной вариант
     let left = false; const mark = () => { left = true; };
     window.addEventListener('blur', mark, { once: true });
     document.addEventListener('visibilitychange', mark, { once: true });
-    window.location.href = href;
+    window.location.href = o.href;
     setTimeout(() => { if (!left) $('#manual').open = true; }, 1800);
   };
 
